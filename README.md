@@ -1,6 +1,7 @@
 # What is this?
 - Expressjs RESTful application with AWS locally
 - *Note:* Every time you close the connection the DB will loose all it's data
+- [AWS Dynamodb docs](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GettingStarted.NodeJs.01.html)
 
 # Local development
 - Install some global packages
