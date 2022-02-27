@@ -1,8 +1,20 @@
 service: aws-node-express-dynamodb-api-project
 frameworkVersion: '3'
 
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline
+
 custom:
-  tableName: 'users-table-${sls:stage}'
+  tableName: 'users-table-dev'
+  dynamodb:
+    start:
+      migrate: true
+    stages:
+      - dev
+  serverless-offline:
+    resourceRoutes: true # HTTP proxy lambdas
+
 
 provider:
   name: aws
@@ -21,7 +33,7 @@ provider:
           Resource:
             - Fn::GetAtt: [ UsersTable, Arn ]
   environment:
-    USERS_TABLE: ${self:custom.tableName}
+    DYNAMODB_TABLE_NAME: ${self:custom.tableName}
 
 functions:
   api:

@@ -1,24 +1,63 @@
+# What is this?
+- Expressjs RESTful application with AWS locally
+- *Note:* Every time you close the connection the DB will loose all it's data
 
+# Local development
+- Install some global packages
+  ```shell
+  $ npm install -g serverless serverless-dynamodb-local serverless-offline
 
+  # Init a new application
+  $ serverless
+  ```
 
+1. Configure your DynamoDB client
+  ```js
+  const dynamoDbClientParams = {};
+  if (process.env.IS_OFFLINE) {
+    AWS.config.update({
+      region: "us-west-2",
+      accessKeyId: "accessKeyId",
+      secretAccessKey: "secretAccessKey",
+    });
 
-```shell
-$ npm install -g serverless serverless-dynamodb-local serverless-offline
+    dynamoDbClientParams.region = "localhost";
+    dynamoDbClientParams.endpoint = "http://localhost:8000";
+  }
+  const dynamoDbClient = new AWS.DynamoDB.DocumentClient(dynamoDbClientParams);
+  ```
 
-$ serverless
+2. Update the `serverless.yml` file with offline config
+```yml
+custom:
+  tableName: 'users-table-${sls:stage}'
+  dynamodb:
+    stages:
+      - dev
+    start:
+      - migrate: true
+  serverless-offline:
+    resourceRoutes: true # HTTP proxy lambdas
+
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline
 ```
 
-- Make bogass credentials `~/.aws/credentials`
+3. Install serverless local dynamodb
   ```shell
-  aws_access_key_id = aws_access_key_id
-  aws_secret_access_key = aws_secret_access_key
+  $ sls dynamodb install
   ```
-- configure your DynamoDB client
-  ```js
-  const dynamoDbClient = new AWS.DynamoDB.DocumentClient({
-    region: "us-west-2",
-    accessKeyId: "aws_access_key_id",
-    secretAccessKeyId: "aws_secret_access_key",
-    endpoint: "https://localhost:8000",
-  });
+
+4. Run the serverless framework locally
+  ```shell
+  $ sls offline start
   ```
+
+
+
+
+
+
+
+

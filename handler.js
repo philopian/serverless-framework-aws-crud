@@ -4,14 +4,46 @@ const serverless = require("serverless-http");
 
 const app = express();
 
-const USERS_TABLE = process.env.USERS_TABLE;
-const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
+const DYNAMODB_TABLE_NAME = process.env.DYNAMODB_TABLE_NAME;
+
+const dynamoDbClientParams = {};
+if (process.env.IS_OFFLINE) {
+  AWS.config.update({
+    region: "us-west-2",
+    accessKeyId: "accessKeyId",
+    secretAccessKey: "secretAccessKey",
+  });
+
+  dynamoDbClientParams.region = "localhost";
+  dynamoDbClientParams.endpoint = "http://localhost:8000";
+}
+const dynamoDbClient = new AWS.DynamoDB.DocumentClient(dynamoDbClientParams);
 
 app.use(express.json());
 
+app.get("/users", async function (req, res) {
+  const params = {
+    TableName: DYNAMODB_TABLE_NAME,
+  };
+
+  try {
+    let promise = dynamoDbClient.scan(params).promise();
+    let result = await promise;
+    let data = result.Items;
+    if (result.LastEvaluatedKey) {
+      params.ExclusiveStartKey = result.LastEvaluatedKey;
+      data = data.concat(await dbRead(params));
+    }
+    res.json(data);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Could not retreive user" });
+  }
+});
+
 app.get("/users/:userId", async function (req, res) {
   const params = {
-    TableName: USERS_TABLE,
+    TableName: DYNAMODB_TABLE_NAME,
     Key: {
       userId: req.params.userId,
     },
@@ -33,6 +65,7 @@ app.get("/users/:userId", async function (req, res) {
 
 app.post("/users", async function (req, res) {
   const { userId, name } = req.body;
+  console.log({ userId, name });
   if (typeof userId !== "string") {
     res.status(400).json({ error: '"userId" must be a string' });
   } else if (typeof name !== "string") {
@@ -40,7 +73,7 @@ app.post("/users", async function (req, res) {
   }
 
   const params = {
-    TableName: USERS_TABLE,
+    TableName: DYNAMODB_TABLE_NAME,
     Item: {
       userId: userId,
       name: name,

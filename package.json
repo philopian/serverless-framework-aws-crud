@@ -2,8 +2,12 @@
   "name": "aws-node-express-dynamodb-api-project",
   "version": "1.0.0",
   "description": "",
+  "scripts":{
+    "dev": "sls offline start"
+  },
   "dependencies": {
-    "express": "^4.17.1",
+    "aws-sdk": "^2.1082.0",
+    "express": "^4.17.3",
     "serverless-http": "^2.7.0"
   }
 }
